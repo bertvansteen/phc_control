@@ -2,20 +2,17 @@
 from __future__ import annotations
 from typing import Any
 
-import requests
 import logging
 import voluptuous as vol
-from config.custom_components.phc_control.coordinator import PHCUpdateCoordinator
-from config.custom_components.phc_control.entity import PHCEntity
-from config.custom_components.phc_control.phcgateway import PHCGateway
+
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType
 
 import homeassistant.helpers.config_validation as cv
-import xml.etree.ElementTree as ET
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_TRANSITION,
     PLATFORM_SCHEMA,
     ColorMode,
     LightEntity,
@@ -27,8 +24,10 @@ from homeassistant.const import (
     CONF_TYPE,
 )
 
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from .const import DOMAIN
+from .coordinator import PHCUpdateCoordinator
+from .entity import PHCEntity
+from .phcgateway import PHCGateway
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +39,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TYPE): cv.string,
     }
 )
-
-from .const import DOMAIN
 
 
 # def setup_platform(
@@ -63,8 +60,6 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigType, add_entities: AddEntitiesCallback
 ) -> None:
     """Set up the PHC Lights platform."""
-    host = entry.data[CONF_HOST]
-
     coordinator: PHCUpdateCoordinator = hass.data[DOMAIN][
         str(entry.entry_id) + "_coordinator"
     ]

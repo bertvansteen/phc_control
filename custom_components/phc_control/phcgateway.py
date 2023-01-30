@@ -129,10 +129,7 @@ class PHCGateway:
             channels = {}
             if mod.attrib["name"].startswith("AMD230"):
                 for cha in mod.findall("./CHAS[@grp='Ausgang']/CHA[@visu='true']"):
-                    channels[int(cha.attrib["adr"])] = cha.text.strip().split("()")[0]
-                    # print(
-                    #     f"{mod.attrib['adr']}-{cha.attrib['adr']}: {cha.text.strip()}"
-                    # )
+                    channels[int(cha.attrib["adr"])] = cha.text.strip().split("(")[0]
             dev = OutputDeviceDescription(
                 type="Output", address=int(mod.attrib["adr"]), channels=channels
             )
@@ -153,7 +150,7 @@ class PHCGateway:
             channels = {}
             if mod.attrib["name"].startswith("DIM_AB"):
                 for cha in mod.findall("./CHAS[@grp='Ausgang']/CHA[@visu='true']"):
-                    channels[int(cha.attrib["adr"])] = cha.text.strip().split("()")[0]
+                    channels[int(cha.attrib["adr"])] = cha.text.strip().split("(")[0]
             dev = OutputDeviceDescription(
                 type="Output", address=int(mod.attrib["adr"]), channels=channels
             )

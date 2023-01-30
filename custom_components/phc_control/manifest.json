@@ -1,8 +1,8 @@
 {
     "domain": "phc_control",
     "name": "PHC Control",
-    "documentation": "https://github.com/bertvansteen/phc-control",
-    "issue_tracker": "https://github.com/bertvansteen/phc-control/issues",
+    "documentation": "https://github.com/bertvansteen/phc_control",
+    "issue_tracker": "https://github.com/bertvansteen/phc_control/issues",
     "config_flow": true,
     "version": "v2023.1.1",
     "iot_class": "local_polling",

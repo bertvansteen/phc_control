@@ -1,22 +1,18 @@
 """Platform for switch integration."""
 from __future__ import annotations
 from typing import Any
-from config.custom_components.phc_control.phcgateway import PHCGateway
 
 from homeassistant.const import *
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers.typing import ConfigType
-
-
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
 
-import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 
 from .const import *
 from .coordinator import PHCUpdateCoordinator as Coordinator
+from .phcgateway import PHCGateway
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -39,16 +35,8 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Homewizard Capacity from a config entry."""
     coordinator = Coordinator(hass, entry, entry.data[CONF_HOST])
-    # try:
+
     await coordinator.async_config_entry_first_refresh()
-
-    # except ConfigEntryNotReady:
-    #     await coordinator.api.close()  # type: ignore[no-untyped-call]
-
-    #     if coordinator.api_disabled:
-    #         entry.async_start_reauth(hass)
-
-    #     raise
 
     gateway = PHCGateway(entry.data[CONF_HOST])
 

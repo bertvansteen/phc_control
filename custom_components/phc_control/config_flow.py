@@ -1,32 +1,21 @@
 """Config flow for HomeWizard."""
 from __future__ import annotations
+from typing import Any
 
-from collections.abc import Mapping
-from typing import Any, NamedTuple
-
-from voluptuous import Required, Schema
-
+from homeassistant import config_entries
+from homeassistant.const import CONF_HOST
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
     TextSelector,
-    TextSelectorConfig,
-    TextSelectorType,
-)
-from .phcgateway import PHCGateway
-from homeassistant import config_entries
-
-import voluptuous as vol
-from homeassistant.components import zeroconf
-from homeassistant.config_entries import ConfigEntry, ConfigFlow
-from homeassistant.const import CONF_HOST, CONF_IP_ADDRESS
-from homeassistant.data_entry_flow import AbortFlow, FlowResult
-from homeassistant.exceptions import HomeAssistantError
-
-from .const import (
-    CONF_PATH,
-    DOMAIN,
 )
 
 import logging
+import voluptuous as vol
+
+from .phcgateway import PHCGateway
+from .const import (
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
