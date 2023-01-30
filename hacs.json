@@ -1,0 +1,7 @@
+{
+  "domain": "phc_control",
+  "name": "PHC Control",
+  "country": "BE",
+  "iot_class": "local_polling",
+  "requirements": []
+}
