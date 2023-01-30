@@ -6,7 +6,7 @@ from attr import dataclass
 from homeassistant.const import *
 
 DOMAIN = "phc_control"
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=3600)
 DEFAULT_NAME = "PHC Control"
 DATA_CLIENT = "client"
 SERVICE_REFRESH = "refresh"
