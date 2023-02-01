@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import logging
+import re
 import zipfile
 from attr import dataclass
 import requests
@@ -35,11 +36,25 @@ class OutputDeviceDescription:
     channels: dict[int, str]
 
 
+@dataclass
+class ShutterChannel:
+    name: str
+    runtime: int
+
+
+@dataclass
+class ShutterDeviceDescription:
+    type: str
+    address: int
+    channels: dict[int, ShutterChannel]
+
+
 class PHCGateway:
     _close_session: bool = False
     _request_timeout: int = 10
     _cached_output_modules: list[OutputDeviceDescription]
     _cached_dimmer_modules: list[OutputDeviceDescription]
+    _cached_shutter_modules: list[ShutterDeviceDescription]
 
     def __init__(
         self, host, clientsession: ClientSession = None, timeout: int = 10
@@ -49,6 +64,8 @@ class PHCGateway:
         self._request_timeout = timeout
         self._cached_output_modules = None
         self._cached_dimmer_modules = None
+        self._cached_shutter_modules = None
+        self._downloaded = False
 
     @property
     def host(self) -> str:
@@ -97,6 +114,10 @@ class PHCGateway:
         """download project file"""
         filename = f'/tmp/phc_{self._host.replace(".", "_")}.zip'
         dirname = f'/tmp/phc_{self._host.replace(".", "_")}'
+
+        if self._downloaded:
+            return dirname
+
         with open(filename, "wb") as result:
             for i in range(0, 5):
                 r = requests.post(
@@ -115,6 +136,7 @@ class PHCGateway:
         zip_ref.extractall(dirname)
         zip_ref.close()
 
+        self._downloaded = True
         return dirname
 
     def get_output_modules(self) -> list[OutputDeviceDescription]:
@@ -138,6 +160,34 @@ class PHCGateway:
         self._cached_output_modules = res
         return res
 
+    def get_shutter_modules(self) -> list[ShutterDeviceDescription]:
+        if not self._cached_shutter_modules is None:
+            return self._cached_shutter_modules
+
+        dirname = self.get_project()
+
+        res = list[ShutterDeviceDescription]()
+        project = ET.parse(f"{dirname}/project.ppfx")
+        for mod in project.getroot().findall("./STM/MODS[@grp='Ausgangsmodule']/MOD"):
+            channels = {}
+            if mod.attrib["name"].startswith("JRM"):
+                for cha in mod.findall("./CHAS[@grp='Ausgang']/CHA[@visu='true']"):
+                    runtimematches = re.findall("#([0-9]+)s", cha.text)
+                    channels[int(cha.attrib["adr"])] = ShutterChannel(
+                        name=cha.text.strip().split("(")[0],
+                        runtime=int(runtimematches[0]) if runtimematches else 90,
+                    )
+
+            dev = ShutterDeviceDescription(
+                type="Shutter",
+                address=int(mod.attrib["adr"]),
+                channels=channels,
+            )
+            res.append(dev)
+
+        self._cached_shutter_modules = res
+        return res
+
     def get_dimmer_modules(self):
         if not self._cached_dimmer_modules is None:
             return self._cached_dimmer_modules
@@ -152,7 +202,9 @@ class PHCGateway:
                 for cha in mod.findall("./CHAS[@grp='Ausgang']/CHA[@visu='true']"):
                     channels[int(cha.attrib["adr"])] = cha.text.strip().split("(")[0]
             dev = OutputDeviceDescription(
-                type="Output", address=int(mod.attrib["adr"]), channels=channels
+                type="Output",
+                address=int(mod.attrib["adr"]),
+                channels=channels,
             )
             res.append(dev)
 
@@ -199,6 +251,28 @@ class PHCGateway:
     def dimmer_command(self, address: int, channel: int, command: int) -> None:
         """Send command for channel to PHC."""
         commandText = f'<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>service.stm.sendTelegram</methodName><params><param><value><i4>0</i4></value></param><param><value><i4>{(160 + address)}</i4></value></param><param><value><i4>{(channel * 32 + command)}</i4></value></param></params></methodCall>'
+        response = requests.post(
+            f"http://{self._host}:6680/", commandText, timeout=1500
+        )
+        return None
+
+    def stop_shutter(self, address: int, channel: int) -> None:
+        """Send command for channel to PHC."""
+        return self.output_command(address, channel, command=2)
+
+    def open_shutter(self, address: int, channel: int, runtime: int) -> None:
+        """Send command for channel to PHC."""
+        command = 5  # SwitchOnRaising
+        commandText = f'<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>service.stm.sendTelegram</methodName><params><param><value><i4>0</i4></value></param><param><value><i4>{64 + address}</i4></value></param><param><value><i4>{channel * 32 + command}</i4></value></param><param><value><i4>1</i4></value></param><param><value><i4>{(runtime * 10) % 256}</i4></value></param><param><value><i4>{(runtime * 10) // 256}</i4></value></param></params></methodCall>'
+        response = requests.post(
+            f"http://{self._host}:6680/", commandText, timeout=1500
+        )
+        return None
+
+    def close_shutter(self, address: int, channel: int, runtime: int) -> None:
+        """Send command for channel to PHC."""
+        command = 6  # SwitchOnLowering
+        commandText = f'<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>service.stm.sendTelegram</methodName><params><param><value><i4>0</i4></value></param><param><value><i4>{64 + address}</i4></value></param><param><value><i4>{channel * 32 + command}</i4></value></param><param><value><i4>1</i4></value></param><param><value><i4>{(runtime * 10) % 256}</i4></value></param><param><value><i4>{(runtime * 10) // 256}</i4></value></param></params></methodCall>'
         response = requests.post(
             f"http://{self._host}:6680/", commandText, timeout=1500
         )

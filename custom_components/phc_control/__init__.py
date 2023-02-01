@@ -34,11 +34,10 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Homewizard Capacity from a config entry."""
-    coordinator = Coordinator(hass, entry, entry.data[CONF_HOST])
+    gateway = PHCGateway(entry.data[CONF_HOST])
+    coordinator = Coordinator(hass, entry, gateway)
 
     await coordinator.async_config_entry_first_refresh()
-
-    gateway = PHCGateway(entry.data[CONF_HOST])
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][str(entry.entry_id) + "_coordinator"] = coordinator

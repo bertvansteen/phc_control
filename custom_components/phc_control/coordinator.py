@@ -23,13 +23,13 @@ class PHCUpdateCoordinator(DataUpdateCoordinator[DeviceResponseEntry]):
         self,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        host: str,
+        gateway: PHCGateway,
     ) -> None:
         """Initialize Update Coordinator."""
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
         self.entry = entry
-        self.gateway = PHCGateway(host)
+        self.gateway = gateway
 
     async def _async_update_data(self) -> DeviceResponseEntry:
         """Fetch all device and sensor data from api."""

@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from attr import dataclass
-from homeassistant.const import *
+from homeassistant.const import Platform
 
 DOMAIN = "phc_control"
 SCAN_INTERVAL = timedelta(seconds=3600)
@@ -11,7 +11,7 @@ DEFAULT_NAME = "PHC Control"
 DATA_CLIENT = "client"
 SERVICE_REFRESH = "refresh"
 
-PLATFORMS = [Platform.LIGHT]
+PLATFORMS = [Platform.LIGHT, Platform.COVER]
 
 
 @dataclass
